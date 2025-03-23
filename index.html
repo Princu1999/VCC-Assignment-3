@@ -1,0 +1,58 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Multi-Operation Image Processor</title>
+</head>
+<body>
+  <h1>Upload Multiple Images for Processing</h1>
+  <!-- We'll let JavaScript handle submission to display images inline -->
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" name="images" accept="image/*" multiple required>
+    <button type="submit">Process Images</button>
+  </form>
+  <br>
+  <div id="results"></div>
+
+  <script>
+    document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      const response = await fetch('/process', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        console.error('Error processing images');
+        return;
+      }
+
+      const data = await response.json();
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = '';
+
+      // Each element in data.processed_images is a set of 6 base64-encoded images
+      data.processed_images.forEach((imgSet, index) => {
+        const container = document.createElement('div');
+        container.innerHTML = `<h2>Image ${index + 1} Results</h2>`;
+       
+        // For each key in the result set
+        for (const [operation, base64Data] of Object.entries(imgSet)) {
+          if (!base64Data) continue; // skip if encoding failed
+          const opDiv = document.createElement('div');
+          opDiv.style.marginBottom = '20px';
+          opDiv.innerHTML = `<strong>${operation}</strong><br><img src="data:image/png;base64,${base64Data}" width="200">`;
+          container.appendChild(opDiv);
+        }
+
+        resultsDiv.appendChild(container);
+      });
+    });
+  </script>
+</body>
+</html>
+
+
